@@ -579,6 +579,10 @@ def github_gen_gh_pages(
             local_paths=local_paths,
     )
 
+    ready, err_msg = pkg_repo.ready()
+    if not ready:
+        raise RuntimeError(err_msg)
+
     # Download index file.
     index_path = os.path.join(output_folder, index_filename)
     result = pkg_repo.download_index(index_path)
@@ -601,9 +605,10 @@ def github_gen_gh_pages(
 
         link_items = []
         for distrib_pkg_ref in distrib_pkg_refs:
-            response = requests.get(distrib_pkg_ref.url)
+            headers = {'Authorization': f'token {token}'}
+            response = requests.get(distrib_pkg_ref.url, headers=headers)
             if response.status_code != 200:
-                raise RuntimeError(f'Failed to request {distrib_pkg_ref.url}')
+                raise RuntimeError(f'Failed to request {distrib_pkg_ref.url}: {response.text}')
             browser_download_url = response.json()['browser_download_url']
 
             link_items.append(
